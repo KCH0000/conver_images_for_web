@@ -1,9 +1,9 @@
 import os
 from os import path
-from convert_for_web.file_logger import response_logger
+from file_logger import response_logger
 
 
-MIN_FILE_SIZE = 10000
+MIN_FILE_SIZE = 5000
 CONVERT_FORMATS = ['webp', 'avif']
 
 
@@ -31,7 +31,13 @@ class FileWorker:
                 self.done_file_formats.append(file_format)
                 continue
             full_file_path = path.join(path.abspath(self.path), self.filename)
-            file_convert_command = f'convert {full_file_path} {full_file_path}.{file_format}'
+            commands = {
+                'webp': f'convert {full_file_path} -quality 50 -define webp:alpha-quality=50 {full_file_path}.{file_format}',
+                'avif': f'convert {full_file_path} {full_file_path}.{file_format}'
+            }
+            file_convert_command = commands[file_format]
+            if not file_convert_command:
+                continue
             res = os.system(file_convert_command)
             if res != 0:
                 response_logger.error(f'Error while converting {path.join(self.path, self.filename)} to {file_format}')
@@ -39,8 +45,9 @@ class FileWorker:
                 new_file_size = path.getsize(f'{full_file_path}.{file_format}')
                 self.done_file_formats.append(file_format)
                 response_logger.info(f'File {path.join(self.path, self.filename)} converted to {file_format}: '
-                                     f'{(self.file_size - new_file_size)/1000}KB '
-                                     f'{round(new_file_size / self.file_size *100, 0) }%')
+                                     f'orig:{round(self.file_size / 1000, 1)}KB '
+                                     f'new:{round(new_file_size / 1000, 1)}KB '
+                                     f'{round((self.file_size - new_file_size) / self.file_size * 100, 0) }%')
 
     def test_result(self):
         file_sizes = [self.file_size]
