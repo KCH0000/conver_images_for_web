@@ -1,4 +1,4 @@
-# conver_images_for_web
+# convert_images_for_web
 
 Tool for convert images to webp and avif with convert(ImageMagic)
 
